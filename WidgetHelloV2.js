@@ -156,33 +156,36 @@ try {
 let themeColor = new Color(inputArr[2].toString());
 
 
-// Weather Settings
-const wBasePath = "/var/mobile/Library/Mobile Documents/iCloud~dk~simonbs~Scriptable/Documents/WEATHER/";
+// Widget Cache Path Settings
+const wBasePath = "/var/mobile/Library/Mobile Documents/iCloud~dk~simonbs~Scriptable/Documents/WidgetCache/";
 
 // Open weather API_KEY
-const API_WEATHER = "1412c61a30b2f29c47bce78c3523n2cd"; //Load your own api here
-const CITY_NAME = "Suzhou"; // add city Name
+const API_WEATHER = "1412c61a30b2f29c47bce78c3523722d"; //Load api here
+// Suzhou: 101190401  Nanjing: 101190101
+const CITY_NAME = "Suzhou"; // add city ID 
 
 // Get Location 
 
-Location.setAccuracyToBest();
-let curLocation = await Location.current();
+// Location.setAccuracyToBest();
+// let curLocation = await Location.current();
 
 let weatherUrl = "https://api.openweathermap.org/data/2.5/weather?q=" +
 	CITY_NAME + "&appid=" + API_WEATHER + "&units=metric";
 // let weatherUrl = "http://api.openweathermap.org/data/2.5/weather?lat=" +curLocation.latitude + "&lon=" + curLocation.longitude +"&appid=" + API_WEATHER + "&units=metric";
 // let weatherUrl = "http://api.openweathermap.org/data/2.5/weather?id=" + CITY_WEATHER + "&APPID=" + API_WEATHER + "&units=metric";
 
-const weatherJSON = await fetchWeatherData(weatherUrl);
-const cityName = weatherJSON.name;
-const weatherArray = weatherJSON.weather;
+
+const dataJSON = await fetchWeatherData(weatherUrl);
+const cityName = dataJSON.name;
+const weatherArray = dataJSON.weather;
 const iconData = weatherArray[0].icon;
 const weatherName = weatherArray[0].description;
-const curTempObj = weatherJSON.main;
+const curTempObj = dataJSON.main;
 const curTemp = curTempObj.temp;
 const highTemp = curTempObj.temp_max;
 const lowTemp = curTempObj.temp_min;
 const feelsLike = curTempObj.feels_like;
+
 //Completed loading weather data
 
 
@@ -211,14 +214,15 @@ if (config.runsInWidget) {
 	/* Add weather */
 	let weatherStack = widgetHello.addStack();
 	weatherStack.layoutVertically();
-	weatherStack.setPadding(15, 0, 0, 0);
+	weatherStack.setPadding(10, 20, 0, 0);
+	weatherStack.centerAlignContent();
 
 	// Weather Image
 	var img = Image.fromFile(await fetchImageLocal(iconData + "_ico"));
 
 	let wSubStack = weatherStack.addStack();
 	wSubStack.layoutHorizontally();
-	wSubStack.setPadding(10, 0, 10, 0);
+	wSubStack.setPadding(5, 0, 10, 0);
 
 	// Weather image in stack
 	let wUpperStack = wSubStack.addStack();
@@ -269,7 +273,7 @@ if (config.runsInWidget) {
 	wDetailText2.textOpacity = 1;
 	wDetailText2.leftAlignText();
 
-	widgetHello.addSpacer(25);
+	weatherStack.addSpacer(20);
 
 	/*-----------------------------------------------------------*/
 	/* Year Progress */
@@ -277,7 +281,7 @@ if (config.runsInWidget) {
 	let yearStack = widgetHello.addStack();
 	yearStack.layoutVertically();
 
-	const yearFont = new Font('Menlo', 15);
+	const yearFont = new Font('Menlo', 16);
 	const yearColor = new Color('#80DEEA');
 
 	// Year icon in stack
@@ -304,28 +308,32 @@ if (config.runsInWidget) {
 	let batteryStack = widgetHello.addStack();
 	batteryStack.layoutVertically();
 
-	const batteryFont = new Font("Menlo", 15);
+	let batteryTitleStack = batteryStack.addStack();
+	batteryStack.layoutVertically();
+	const batteryIcon = batteryTitleStack.addImage(provideBatteryIcon())
+	batteryIcon.imageSize = new Size(16, 16);
+
+	const batteryFont = new Font("Menlo", 16);
 	let batteryLevel = Device.batteryLevel();
 
 
-	var batteryColor, batteryIcon;
-	if (batteryLevel >= 0.6) {
+	var batteryColor;
+	if (batteryLevel >= 0.6)
 		batteryColor = new Color("#A8DF65");
-		batteryIcon = batteryStack.addText("⚡⚡⚡ Battery");
-	} else if (batteryLevel >= 0.2) {
+	else if (batteryLevel >= 0.2)
 		batteryColor = new Color("#FFCC00");
-		batteryIcon = batteryStack.addText("⚡⚡ Battery");
-	} else {
-		batteryColor = new Color("#FF1744");
-		batteryIcon = batteryStack.addText("⚡ Battery");
-	}
+	else
+		batteryColor = new Color("#FFD571");
 
-	batteryIcon.font = batteryFont;
-	batteryIcon.textColor = batteryColor;
-	batteryIcon.textOpacity = 1;
-	batteryIcon.leftAlignText();
 
-	// Battery Progress in stack\
+	batteryTitleText = batteryTitleStack.addText(" Battery\t");
+	batteryTitleText.font = batteryFont;
+	batteryTitleText.textColor = batteryColor;
+	batteryIcon.tintColor = batteryColor;
+	batteryTitleText.textOpacity = 1;
+	batteryTitleText.leftAlignText();
+
+	// Battery Progress in stack
 	let bProgressStack = batteryStack.addStack();
 	bProgressStack.layoutHorizontally();
 	bProgressStack.setPadding(0, 25, 0, 0);
@@ -337,9 +345,9 @@ if (config.runsInWidget) {
 	batteryLine.textOpacity = 1;
 	batteryLine.leftAlignText();
 
-	let state = Device.isCharging() ? "Charging" : " ";
+
 	let batterytext = bProgressStack.addText(
-		"[" + Math.round(batteryLevel * 100) + "%] " + state);
+		"[" + Math.round(batteryLevel * 100) + "%] ");
 	batterytext.font = batteryFont;
 	batterytext.textColor = batteryColor;
 	batterytext.textOpacity = (1);
@@ -348,7 +356,7 @@ if (config.runsInWidget) {
 	/* ------------------------------------------------------ */
 	// Bottom Spacer
 	widgetHello.addSpacer();
-	widgetHello.setPadding(15, 7, 10, 0);
+	widgetHello.setPadding(0, 20, 10, 0);
 
 	// Set widget
 	Script.setWidget(widgetHello);
@@ -365,12 +373,60 @@ if (config.runsInWidget) {
 /* Functions                                                              */
 /* ---------------------------------------------------------------------- */
 
+function provideBatteryIcon() {
 
+	// If we're charging, show the charging icon.
+	if (Device.isCharging()) {
+		return SFSymbol.named("battery.100.bolt").image
+	}
+
+	// Set the size of the battery icon.
+	const batteryWidth = 87
+	const batteryHeight = 41
+
+	// Start our draw context.
+	let draw = new DrawContext()
+	draw.opaque = false
+	draw.respectScreenScale = true
+	draw.size = new Size(batteryWidth, batteryHeight)
+
+	// Draw the battery.
+	draw.drawImageInRect(SFSymbol.named("battery.0").image, new Rect(0, 0, batteryWidth, batteryHeight))
+
+	// Match the battery level values to the SFSymbol.
+	const x = batteryWidth * 0.1525
+	const y = batteryHeight * 0.247
+	const width = batteryWidth * 0.602
+	const height = batteryHeight * 0.505
+
+	// Prevent unreadable icons.
+	let level = Device.batteryLevel()
+	if (level < 0.05) {
+		level = 0.05
+	}
+
+	// Determine the width and radius of the battery level.
+	const current = width * level
+	let radius = height / 6.5
+
+	// When it gets low, adjust the radius to match.
+	if (current < (radius * 2)) {
+		radius = current / 2
+	}
+
+	// Make the path for the battery level.
+	let barPath = new Path()
+	barPath.addRoundedRect(new Rect(x, y, current, height), radius, radius)
+	draw.addPath(barPath)
+	draw.setFillColor(Color.black())
+	draw.fillPath()
+	return draw.getImage()
+}
 
 // Render battery with data
 function renderBattery(batteryLevel) {
-	const left = "▓".repeat(Math.floor(batteryLevel * 20));
-	const used = "░".repeat(20 - left.length)
+	const left = "▓".repeat(Math.floor(batteryLevel * 25));
+	const used = "░".repeat(25 - left.length)
 	const batteryAscii = left + used + " ";
 	return batteryAscii;
 }
@@ -385,8 +441,8 @@ function renderYearProgress() {
 }
 
 function renderProgress(progress) {
-	const used = '▓'.repeat(Math.floor(progress * 20))
-	const left = '░'.repeat(20 - used.length)
+	const used = '▓'.repeat(Math.floor(progress * 25))
+	const left = '░'.repeat(25 - used.length)
 	return `${used}${left} [${Math.floor(progress * 100)}%]`;
 }
 
@@ -400,7 +456,7 @@ async function fetchImgUrl(url) {
 
 async function downloadWeatherImg(path) {
 	const url = "http://a.animedlweb.ga/weather/weathers25_2.json";
-	const data = await fetchWeatherData(url);
+	const data = await fetchWeatherPicData(url);
 	var dataimg = null;
 	var name = null;
 	if (path.includes("bg")) {
@@ -471,13 +527,50 @@ async function downloadWeatherImg(path) {
 	fm.writeImage(wBasePath + path + ".png", image);
 }
 
+// Get Weather Json 
+async function fetchWeatherPicData(url) {
 
-// Get Json weather
-async function fetchWeatherData(url) {
-	const request = new Request(url);
-	const res = await request.loadJSON();
-	return res;
+	const cachePath = wBasePath + "weather-pic-cache";
+	const cacheExists = fm.fileExists(cachePath);
+	const cacheDate = cacheExists ? fm.modificationDate(cachePath) : 0;
+	let weatherDataRaw;
+	// If cache exists and it's been less than 60 seconds since last request, use cached data.
+	if (cacheExists && (new Date().getTime() - cacheDate.getTime()) < 60000) {
+		const cache = fm.readString(cachePath);
+		weatherDataRaw = JSON.parse(cache);
+	} else {
+		// Otherwise, use the API to get new weather data.
+		const request = new Request(url);
+		weatherDataRaw = await request.loadJSON();
+		fm.writeString(cachePath, JSON.stringify(weatherDataRaw));
+
+	}
+
+	return weatherDataRaw;
 }
+
+// Get Weather Json 
+async function fetchWeatherData(url) {
+
+	const cachePath = wBasePath + "weather-cache";
+	const cacheExists = fm.fileExists(cachePath);
+	const cacheDate = cacheExists ? fm.modificationDate(cachePath) : 0;
+	let weatherDataRaw;
+	// If cache exists and it's been less than 60 seconds since last request, use cached data.
+	if (cacheExists && (new Date().getTime() - cacheDate.getTime()) < 60000) {
+		const cache = fm.readString(cachePath);
+		weatherDataRaw = JSON.parse(cache);
+	} else {
+		// Otherwise, use the API to get new weather data.
+		const request = new Request(url);
+		weatherDataRaw = await request.loadJSON();
+		fm.writeString(cachePath, JSON.stringify(weatherDataRaw));
+
+	}
+
+	return weatherDataRaw;
+}
+
 
 // Load image from local drive
 async function fetchImageLocal(path) {
